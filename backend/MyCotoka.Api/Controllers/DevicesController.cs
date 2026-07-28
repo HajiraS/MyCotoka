@@ -35,6 +35,7 @@ public class DevicesController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create(DeviceDto dto)
     {
         var device = new Device
@@ -48,6 +49,7 @@ public class DevicesController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Update(int id, DeviceDto dto)
     {
         var device = await _db.Devices.FindAsync(id);
@@ -60,6 +62,7 @@ public class DevicesController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(int id)
     {
         var device = await _db.Devices.FindAsync(id);
