@@ -54,7 +54,10 @@ export default function DevicesPage() {
       setOpen(false);
       loadDevices();
     } catch (err) {
-      setError('Could not save device. Check the fields and try again.');
+      const apiMessage = err.response?.data?.message
+        || err.response?.data?.errors?.[Object.keys(err.response?.data?.errors || {})[0]]?.[0]
+        || 'Could not save device. Check the fields and try again.';
+      setError(apiMessage);
     }
   };
 

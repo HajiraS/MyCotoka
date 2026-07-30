@@ -4,11 +4,14 @@ import HomePage from './pages/HomePage'
 import DevicesPage from './pages/DevicesPage'
 import ClientsPage from './pages/ClientsPage'
 import SubscriptionsPage from './pages/SubscriptionsPage'
+import UsersPage from './pages/UsersPage'
 import { useAuth } from './hooks/useAuth'
 
-function ProtectedRoute({ children }) {
-  const { isAuthenticated } = useAuth()
-  return isAuthenticated ? children : <Navigate to="/login" />
+function ProtectedRoute({ children, adminOnly }) {
+  const { isAuthenticated, isAdmin } = useAuth()
+  if (!isAuthenticated) return <Navigate to="/login" />
+  if (adminOnly && !isAdmin) return <Navigate to="/home" />
+  return children
 }
 
 function App() {
@@ -19,6 +22,7 @@ function App() {
       <Route path="/devices" element={<ProtectedRoute><DevicesPage /></ProtectedRoute>} />
       <Route path="/clients" element={<ProtectedRoute><ClientsPage /></ProtectedRoute>} />
       <Route path="/subscriptions" element={<ProtectedRoute><SubscriptionsPage /></ProtectedRoute>} />
+      <Route path="/users" element={<ProtectedRoute adminOnly><UsersPage /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/home" />} />
     </Routes>
   )

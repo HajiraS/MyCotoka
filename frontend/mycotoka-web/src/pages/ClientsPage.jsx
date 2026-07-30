@@ -2,11 +2,24 @@ import { useEffect, useState } from 'react';
 import {
   Table, TableHeader, TableRow, TableHeaderCell, TableBody, TableCell,
   Button, Title3, Dialog, DialogTrigger, DialogSurface, DialogTitle,
-  DialogBody, DialogActions, Input, Field
+  DialogBody, DialogActions, Input, Field, Card
 } from '@fluentui/react-components';
+import { SearchRegular } from '@fluentui/react-icons';
 import api from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import NavBar from './NavBar';
+
+function extractErrorMessage(err, fallback) {
+  const data = err.response?.data;
+  if (!data) return fallback;
+  if (data.message) return data.message;
+  if (data.errors) {
+    const firstKey = Object.keys(data.errors)[0];
+    if (firstKey && data.errors[firstKey]?.[0]) return data.errors[firstKey][0];
+  }
+  if (typeof data === 'string') return data;
+  return fallback;
+}
 
 export default function ClientsPage() {
   const [clients, setClients] = useState([]);
@@ -32,6 +45,7 @@ export default function ClientsPage() {
     setEditingId(null);
     setCompanyName('');
     setContactEmail('');
+    setError('');
     setOpen(true);
   };
 
@@ -39,6 +53,7 @@ export default function ClientsPage() {
     setEditingId(client.id);
     setCompanyName(client.companyName);
     setContactEmail(client.contactEmail);
+    setError('');
     setOpen(true);
   };
 
@@ -53,7 +68,7 @@ export default function ClientsPage() {
       setOpen(false);
       loadClients();
     } catch (err) {
-      setError('Could not save client. Check the fields and try again.');
+      setError(extractErrorMessage(err, 'Could not save client. Check the fields and try again.'));
     }
   };
 
@@ -62,7 +77,7 @@ export default function ClientsPage() {
       await api.delete(`/clients/${id}`);
       loadClients();
     } catch (err) {
-      setError('Could not delete client.');
+      setError(extractErrorMessage(err, 'Could not delete client.'));
     }
   };
 
@@ -74,8 +89,8 @@ export default function ClientsPage() {
   return (
     <>
       <NavBar />
-      <div style={{ padding: '32px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+      <div style={{ padding: '32px', maxWidth: '1200px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <Title3>Clients</Title3>
           {isAdmin && (
             <Dialog open={open} onOpenChange={(e, data) => setOpen(data.open)}>
@@ -86,11 +101,12 @@ export default function ClientsPage() {
                 <form onSubmit={handleSubmit}>
                   <DialogBody>
                     <DialogTitle>{editingId ? 'Edit Client' : 'Add Client'}</DialogTitle>
+                    {error && <p style={{ color: '#d13438', fontSize: '13px' }}>{error}</p>}
                     <Field label="Company Name" style={{ marginBottom: '12px' }}>
-                      <Input value={companyName} onChange={(e) => setCompanyName(e.target.value)} required />
+                      <Input value={companyName} onChange={(e, data) => setCompanyName(data.value)} required />
                     </Field>
                     <Field label="Contact Email">
-                      <Input value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} required />
+                      <Input value={contactEmail} onChange={(e, data) => setContactEmail(data.value)} required />
                     </Field>
                   </DialogBody>
                   <DialogActions>
@@ -107,37 +123,40 @@ export default function ClientsPage() {
           )}
         </div>
         <Input
+          contentBefore={<SearchRegular />}
           placeholder="Search by company name or email..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{ marginBottom: '16px', width: '320px' }}
+          onChange={(e, data) => setSearch(data.value)}
+          style={{ marginBottom: '20px', width: '320px' }}
         />
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHeaderCell>ID</TableHeaderCell>
-              <TableHeaderCell>Company Name</TableHeaderCell>
-              <TableHeaderCell>Contact Email</TableHeaderCell>
-              {isAdmin && <TableHeaderCell>Actions</TableHeaderCell>}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredClients.map((c) => (
-              <TableRow key={c.id}>
-                <TableCell>{c.id}</TableCell>
-                <TableCell>{c.companyName}</TableCell>
-                <TableCell>{c.contactEmail}</TableCell>
-                {isAdmin && (
-                  <TableCell style={{ display: 'flex', gap: '8px' }}>
-                    <Button size="small" onClick={() => openEditDialog(c)}>Edit</Button>
-                    <Button size="small" onClick={() => handleDelete(c.id)}>Delete</Button>
-                  </TableCell>
-                )}
+        {error && !open && <p style={{ color: 'red' }}>{error}</p>}
+        <Card style={{ padding: 0, overflow: 'hidden', borderRadius: '10px', border: '1px solid #edebe9' }}>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHeaderCell>ID</TableHeaderCell>
+                <TableHeaderCell>Company Name</TableHeaderCell>
+                <TableHeaderCell>Contact Email</TableHeaderCell>
+                {isAdmin && <TableHeaderCell>Actions</TableHeaderCell>}
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {filteredClients.map((c) => (
+                <TableRow key={c.id}>
+                  <TableCell>{c.id}</TableCell>
+                  <TableCell>{c.companyName}</TableCell>
+                  <TableCell>{c.contactEmail}</TableCell>
+                  {isAdmin && (
+                    <TableCell style={{ display: 'flex', gap: '8px' }}>
+                      <Button size="small" onClick={() => openEditDialog(c)}>Edit</Button>
+                      <Button size="small" onClick={() => handleDelete(c.id)}>Delete</Button>
+                    </TableCell>
+                  )}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
       </div>
     </>
   );

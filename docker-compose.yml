@@ -13,5 +13,29 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "mycotoka_user", "-pmycotoka_pass"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ./backend/MyCotoka.Api
+      dockerfile: Dockerfile
+    container_name: mycotoka-api
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      ConnectionStrings__DefaultConnection: "server=mysql;port=3306;database=mycotoka_db;user=mycotoka_user;password=mycotoka_pass"
+      Jwt__Key: "${JWT_KEY}"
+      Jwt__Issuer: "MyCotoka"
+      Jwt__Audience: "MyCotokaClient"
+      Jwt__ExpiryMinutes: "60"
+    ports:
+      - "5017:8080"
+
 volumes:
   mysql_data:

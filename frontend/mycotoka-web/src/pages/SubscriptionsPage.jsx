@@ -9,6 +9,18 @@ import api from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import NavBar from './NavBar';
 
+function extractErrorMessage(err, fallback) {
+  const data = err.response?.data;
+  if (!data) return fallback;
+  if (data.message) return data.message;
+  if (data.errors) {
+    const firstKey = Object.keys(data.errors)[0];
+    if (firstKey && data.errors[firstKey]?.[0]) return data.errors[firstKey][0];
+  }
+  if (typeof data === 'string') return data;
+  return fallback;
+}
+
 export default function SubscriptionsPage() {
   const [subscriptions, setSubscriptions] = useState([]);
   const [devices, setDevices] = useState([]);
@@ -39,6 +51,7 @@ export default function SubscriptionsPage() {
     setClientId('');
     setPlanName('');
     setMonthlyPrice('');
+    setError('');
     setOpen(true);
   };
 
@@ -48,6 +61,7 @@ export default function SubscriptionsPage() {
     setClientId(String(sub.clientId));
     setPlanName(sub.planName);
     setMonthlyPrice(String(sub.monthlyPrice));
+    setError('');
     setOpen(true);
   };
 
@@ -68,7 +82,7 @@ export default function SubscriptionsPage() {
       setOpen(false);
       loadAll();
     } catch (err) {
-      setError('Could not save subscription. Check the fields and try again.');
+      setError(extractErrorMessage(err, 'Could not save subscription. Check the fields and try again.'));
     }
   };
 
@@ -77,7 +91,7 @@ export default function SubscriptionsPage() {
       await api.put(`/subscriptions/${id}/cancel`);
       loadAll();
     } catch (err) {
-      setError('Could not cancel subscription.');
+      setError(extractErrorMessage(err, 'Could not cancel subscription.'));
     }
   };
 
@@ -102,6 +116,7 @@ export default function SubscriptionsPage() {
                 <form onSubmit={handleSubmit}>
                   <DialogBody>
                     <DialogTitle>{editingId ? 'Edit Subscription' : 'Add Subscription'}</DialogTitle>
+                    {error && <p style={{ color: '#d13438', fontSize: '13px' }}>{error}</p>}
                     <Field label="Device" style={{ marginBottom: '12px' }}>
                       <Dropdown
                         placeholder="Select a device"
@@ -157,7 +172,7 @@ export default function SubscriptionsPage() {
           onChange={(e, data) => setSearch(data.value)}
           style={{ marginBottom: '20px', width: '320px' }}
         />
-        {error && <p style={{ color: 'red' }}>{error}</p>}
+        {error && !open && <p style={{ color: 'red' }}>{error}</p>}
         <Card style={{ padding: 0, overflow: 'hidden', borderRadius: '10px', border: '1px solid #edebe9' }}>
           <Table>
             <TableHeader>

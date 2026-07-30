@@ -38,6 +38,11 @@ public class DevicesController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create(DeviceDto dto)
     {
+        if (await _db.Devices.AnyAsync(d => d.SerialNumber == dto.SerialNumber))
+        {
+            return BadRequest(new { message = "A device with this serial number already exists." });
+        }
+
         var device = new Device
         {
             SerialNumber = dto.SerialNumber,
