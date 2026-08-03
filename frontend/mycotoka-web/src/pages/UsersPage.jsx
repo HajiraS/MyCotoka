@@ -3,6 +3,7 @@ import {
   Table, TableHeader, TableRow, TableHeaderCell, TableBody, TableCell,
   Button, Title3, Card, Dropdown, Option
 } from '@fluentui/react-components';
+import { DeleteRegular } from '@fluentui/react-icons';
 import api from '../services/api';
 import NavBar from './NavBar';
 
@@ -13,31 +14,19 @@ export default function UsersPage() {
   const [error, setError] = useState('');
 
   const loadUsers = () => {
-    api.get('/users')
-      .then((res) => setUsers(res.data))
-      .catch(() => setError('Could not load users. Admin access required.'));
+    api.get('/users').then((res) => setUsers(res.data)).catch(() => setError('Could not load users. Admin access required.'));
   };
 
-  useEffect(() => {
-    loadUsers();
-  }, []);
+  useEffect(() => { loadUsers(); }, []);
 
   const handleRoleChange = async (id, role) => {
-    try {
-      await api.put(`/users/${id}/role`, { role });
-      loadUsers();
-    } catch (err) {
-      setError('Could not update role.');
-    }
+    try { await api.put(`/users/${id}/role`, { role }); loadUsers(); }
+    catch (err) { setError('Could not update role.'); }
   };
 
   const handleDelete = async (id) => {
-    try {
-      await api.delete(`/users/${id}`);
-      loadUsers();
-    } catch (err) {
-      setError('Could not delete user.');
-    }
+    try { await api.delete(`/users/${id}`); loadUsers(); }
+    catch (err) { setError('Could not delete user.'); }
   };
 
   return (
@@ -70,14 +59,12 @@ export default function UsersPage() {
                       style={{ minWidth: '140px' }}
                       onOptionSelect={(e, data) => handleRoleChange(u.id, data.optionValue)}
                     >
-                      {ROLES.map((r) => (
-                        <Option key={r} value={r}>{r}</Option>
-                      ))}
+                      {ROLES.map((r) => <Option key={r} value={r}>{r}</Option>)}
                     </Dropdown>
                   </TableCell>
                   <TableCell>{new Date(u.createdAt).toLocaleDateString()}</TableCell>
                   <TableCell>
-                    <Button size="small" onClick={() => handleDelete(u.id)}>Delete</Button>
+                    <Button size="small" appearance="subtle" icon={<DeleteRegular />} onClick={() => handleDelete(u.id)} />
                   </TableCell>
                 </TableRow>
               ))}

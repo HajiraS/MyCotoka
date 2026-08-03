@@ -4,10 +4,11 @@ import {
   Button, Title3, Dialog, DialogTrigger, DialogSurface, DialogTitle,
   DialogBody, DialogActions, Input, Field, Dropdown, Option, Card
 } from '@fluentui/react-components';
-import { SearchRegular } from '@fluentui/react-icons';
+import { SearchRegular, EditRegular, DismissCircleRegular, AddRegular } from '@fluentui/react-icons';
 import api from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import NavBar from './NavBar';
+import StatusBadge from '../components/StatusBadge';
 
 function extractErrorMessage(err, fallback) {
   const data = err.response?.data;
@@ -17,7 +18,6 @@ function extractErrorMessage(err, fallback) {
     const firstKey = Object.keys(data.errors)[0];
     if (firstKey && data.errors[firstKey]?.[0]) return data.errors[firstKey][0];
   }
-  if (typeof data === 'string') return data;
   return fallback;
 }
 
@@ -41,26 +41,18 @@ export default function SubscriptionsPage() {
     api.get('/clients').then((res) => setClients(res.data));
   };
 
-  useEffect(() => {
-    loadAll();
-  }, []);
+  useEffect(() => { loadAll(); }, []);
 
   const openAddDialog = () => {
-    setEditingId(null);
-    setDeviceId('');
-    setClientId('');
-    setPlanName('');
-    setMonthlyPrice('');
-    setError('');
-    setOpen(true);
+    setEditingId(null); setDeviceId(''); setClientId(''); setPlanName(''); setMonthlyPrice(''); setError(''); setOpen(true);
   };
 
-  const openEditDialog = (sub) => {
-    setEditingId(sub.id);
-    setDeviceId(String(sub.deviceId));
-    setClientId(String(sub.clientId));
-    setPlanName(sub.planName);
-    setMonthlyPrice(String(sub.monthlyPrice));
+  const openEditDialog = (s) => {
+    setEditingId(s.id);
+    setDeviceId(String(s.deviceId));
+    setClientId(String(s.clientId));
+    setPlanName(s.planName);
+    setMonthlyPrice(String(s.monthlyPrice));
     setError('');
     setOpen(true);
   };
@@ -68,34 +60,22 @@ export default function SubscriptionsPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const payload = {
-        deviceId: Number(deviceId),
-        clientId: Number(clientId),
-        planName,
-        monthlyPrice: Number(monthlyPrice),
-      };
-      if (editingId) {
-        await api.put(`/subscriptions/${editingId}`, payload);
-      } else {
-        await api.post('/subscriptions', payload);
-      }
+      const payload = { deviceId: Number(deviceId), clientId: Number(clientId), planName, monthlyPrice: Number(monthlyPrice) };
+      if (editingId) await api.put(`/subscriptions/${editingId}`, payload);
+      else await api.post('/subscriptions', payload);
       setOpen(false);
       loadAll();
     } catch (err) {
-      setError(extractErrorMessage(err, 'Could not save subscription. Check the fields and try again.'));
+      setError(extractErrorMessage(err, 'Could not save subscription.'));
     }
   };
 
   const handleCancel = async (id) => {
-    try {
-      await api.put(`/subscriptions/${id}/cancel`);
-      loadAll();
-    } catch (err) {
-      setError(extractErrorMessage(err, 'Could not cancel subscription.'));
-    }
+    try { await api.put(`/subscriptions/${id}/cancel`); loadAll(); }
+    catch (err) { setError(extractErrorMessage(err, 'Could not cancel subscription.')); }
   };
 
-  const filteredSubscriptions = subscriptions.filter((s) =>
+  const filtered = subscriptions.filter((s) =>
     (s.device?.serialNumber || '').toLowerCase().includes(search.toLowerCase()) ||
     (s.client?.companyName || '').toLowerCase().includes(search.toLowerCase()) ||
     (s.planName || '').toLowerCase().includes(search.toLowerCase())
@@ -110,7 +90,7 @@ export default function SubscriptionsPage() {
           {isAdmin && (
             <Dialog open={open} onOpenChange={(e, data) => setOpen(data.open)}>
               <DialogTrigger disableButtonEnhancement>
-                <Button appearance="primary" onClick={openAddDialog}>Add Subscription</Button>
+                <Button appearance="primary" icon={<AddRegular />} onClick={openAddDialog}>Add Subscription</Button>
               </DialogTrigger>
               <DialogSurface>
                 <form onSubmit={handleSubmit}>
@@ -125,9 +105,7 @@ export default function SubscriptionsPage() {
                         onOptionSelect={(e, data) => setDeviceId(data.optionValue)}
                       >
                         {devices.map((d) => (
-                          <Option key={d.id} value={String(d.id)}>
-                            {d.serialNumber} ({d.model})
-                          </Option>
+                          <Option key={d.id} value={String(d.id)}>{d.serialNumber} ({d.model})</Option>
                         ))}
                       </Dropdown>
                     </Field>
@@ -139,26 +117,20 @@ export default function SubscriptionsPage() {
                         onOptionSelect={(e, data) => setClientId(data.optionValue)}
                       >
                         {clients.map((c) => (
-                          <Option key={c.id} value={String(c.id)}>
-                            {c.companyName}
-                          </Option>
+                          <Option key={c.id} value={String(c.id)}>{c.companyName}</Option>
                         ))}
                       </Dropdown>
                     </Field>
                     <Field label="Plan Name" style={{ marginBottom: '12px' }}>
                       <Input value={planName} onChange={(e, data) => setPlanName(data.value)} required />
                     </Field>
-                    <Field label="Monthly Price">
+                    <Field label="Monthly Price (₹)">
                       <Input type="number" step="0.01" value={monthlyPrice} onChange={(e, data) => setMonthlyPrice(data.value)} required />
                     </Field>
                   </DialogBody>
                   <DialogActions>
-                    <Button appearance="secondary" onClick={() => setOpen(false)} type="button">
-                      Cancel
-                    </Button>
-                    <Button appearance="primary" type="submit">
-                      Save
-                    </Button>
+                    <Button appearance="secondary" onClick={() => setOpen(false)} type="button">Cancel</Button>
+                    <Button appearance="primary" type="submit">{editingId ? 'Save' : 'Add Subscription'}</Button>
                   </DialogActions>
                 </form>
               </DialogSurface>
@@ -187,19 +159,19 @@ export default function SubscriptionsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredSubscriptions.map((s) => (
+              {filtered.map((s) => (
                 <TableRow key={s.id}>
                   <TableCell>{s.id}</TableCell>
                   <TableCell>{s.device?.serialNumber}</TableCell>
                   <TableCell>{s.client?.companyName}</TableCell>
                   <TableCell>{s.planName}</TableCell>
-                  <TableCell>${s.monthlyPrice}</TableCell>
-                  <TableCell>{s.status}</TableCell>
+                  <TableCell>{"\u20B9"}{s.monthlyPrice}</TableCell>
+                  <TableCell><StatusBadge status={s.status} /></TableCell>
                   {isAdmin && (
-                    <TableCell style={{ display: 'flex', gap: '8px' }}>
-                      <Button size="small" onClick={() => openEditDialog(s)}>Edit</Button>
+                    <TableCell style={{ display: 'flex', gap: '4px' }}>
+                      <Button size="small" appearance="subtle" icon={<EditRegular />} onClick={() => openEditDialog(s)} />
                       {s.status === 'Active' && (
-                        <Button size="small" onClick={() => handleCancel(s.id)}>Cancel</Button>
+                        <Button size="small" appearance="subtle" icon={<DismissCircleRegular />} onClick={() => handleCancel(s.id)} />
                       )}
                     </TableCell>
                   )}
