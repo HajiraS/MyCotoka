@@ -42,6 +42,7 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(
                 "http://localhost:5173",
+                "https://my-cotoka-one.vercel.app",
                 "https://my-cotoka-git-main-haj-s-projects.vercel.app"
               )
               .AllowAnyHeader()
