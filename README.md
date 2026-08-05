@@ -73,9 +73,3 @@ npm run dev
 
 Both the backend and frontend must keep running in their own terminals — neither one starts the other.
 
-## Default login (local)
-
-| Username   | Password     | Role        |
-| ---------- | ------------ | ----------- |
-| `admin`    | `Admin1234!` | Admin       |
-| `testuser` | `Test1234!`  | ClientAdmin |
