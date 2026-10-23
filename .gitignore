@@ -16,3 +16,5 @@ frontend/**/dist/
 *.user
 .env
 frontend/mycotoka-web/.env.local
+.vercel
+.env*
