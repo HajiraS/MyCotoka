@@ -27,10 +27,6 @@ public static class DbSeeder
             });
         }
 
-        // ClientAdmin user (linked to the first client after clients are created)
-        // We create the user later once we have a ClientId available.
-        // See the "Link testuser" section near the end.
-
         // ------------------------------------------------------------------
         // 2. Clients
         // ------------------------------------------------------------------
@@ -121,7 +117,7 @@ public static class DbSeeder
                     },
                     new Subscription
                     {
-                        DeviceId     = availableDevices[1].Id pen,
+                        DeviceId     = availableDevices[1].Id,
                         ClientId     = clients[1].Id,
                         PlanName     = "Pro",
                         MonthlyPrice = 49.99m,
@@ -144,8 +140,7 @@ public static class DbSeeder
                         PlanName     = "Pro",
                         MonthlyPrice = 49.99m,
                         Status       = SubscriptionStatus.Paused,
-                        StartDate    = DateTime.UtcNow.AddMonths(-6),
-                        EndDate      = null
+                        StartDate    = DateTime.UtcNow.AddMonths(-6)
                     }
                 };
 
