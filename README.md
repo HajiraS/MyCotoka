@@ -81,61 +81,7 @@ flowchart LR
     classDef actor fill:#f5f5f5,stroke:#888,color:#222
 ```
 
-### Authentication and request flow
 
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User
-    participant SPA as React SPA (Vercel)
-    participant API as ASP.NET Core API (Render)
-    participant DB as TiDB Cloud
-
-    User->>SPA: Enter credentials
-    SPA->>API: POST login
-    API->>DB: Look up user
-    DB-->>API: User record + BCrypt hash
-    API->>API: Verify hash, issue signed JWT with role claim
-    API-->>SPA: JWT
-    Note over SPA: Token attached to every later request
-
-    User->>SPA: Open Devices / Dashboard
-    SPA->>API: GET resource (Authorization: Bearer JWT)
-    API->>API: Validate token and role policy
-    API->>DB: Query via EF Core
-    DB-->>API: Rows
-    API-->>SPA: JSON
-    SPA-->>User: Render tables and charts
-```
-
-### Domain model
-
-```mermaid
-erDiagram
-    CLIENT       ||--o{ SUBSCRIPTION : holds
-    DEVICE       ||--o{ SUBSCRIPTION : "leased through"
-    USER         }o--|| ROLE : "has"
-
-    CLIENT {
-        int Id PK
-    }
-    DEVICE {
-        int Id PK
-    }
-    SUBSCRIPTION {
-        int Id PK
-        int ClientId FK
-        int DeviceId FK
-    }
-    USER {
-        int Id PK
-    }
-    ROLE {
-        string Name "Admin | ClientAdmin"
-    }
-```
-
-> The diagram shows the core relationships only. Fields and cardinalities should match the EF Core entities under `backend/MyCotoka.Api`.
 
 ## Tech stack
 
